@@ -56,7 +56,7 @@ def get_incidents(lines_requested, api_key):
                 logging.info("Lines: {}".format(lines_requested))
                 logging.info(lines_affected)
                 for index, line in enumerate(lines_affected):
-                    lines_affected[index] = str.strip(line)
+                    lines_affected[index] = unicode.strip(line)
 
                 logging.info(set(lines_requested).intersection(lines_affected))
                 if bool(set(lines_requested).intersection(lines_affected)):
@@ -145,7 +145,7 @@ def draw_message(canvas, message, font_file):
     for index, title_line in enumerate(title_lines):
         lines.insert(index, title_line)
 
-    for i in range(0, len(lines), 4):
+    for i in xrange(0, len(lines), 4):
         if len(lines) - i < 4:
             lines_to_display = len(lines) - i
         else:
