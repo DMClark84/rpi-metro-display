@@ -24,6 +24,7 @@ import os
 import requests
 import json
 import logging
+import operator 
 from incidents import get_incidents, draw_incident
 from logging.handlers import TimedRotatingFileHandler, SysLogHandler
 
@@ -49,10 +50,10 @@ def show_train_times(api_key, font_file, canvas, prev_lines, prev_cars, prev_des
         times == None:
         lines, cars, dests, times = prev_lines, prev_cars, prev_dests, prev_times
         logging.error("Error getting update from WMATA API.")
-    elif cmp(lines, prev_lines) != 0 or \
-        cmp(cars, prev_cars) != 0 or \
-        cmp(dests, prev_dests) != 0 or \
-        cmp(times, prev_times) != 0:
+    elif lines != prev_lines or \
+        cars != prev_cars or \
+        dests != prev_dests or \
+        times != prev_times:
         force_update = True
     elif force_update: 
         # Needed after an incident is displayed and the train times haven't changed
