@@ -85,9 +85,9 @@ def run_display(api_key, font_file):
         force_update = False
         if incidents_check_count == 12: # check for incidents every minute
             force_update = True
-            station = get_station_by_code(station_code.value)
+            station = get_station_by_code(station_code.value.decode('UTF-8'))
             if station == None:
-                logging.error("Could not find station for code: {}", station_code.value)
+                logging.error("Could not find station for code: {}", station_code.value.decode('UTF-8'))
             line_codes = get_line_codes_from_station(station)
             incidents = get_incidents(line_codes, api_key)
             for incident in incidents:
@@ -115,7 +115,7 @@ def get_train_data(api_key):
     headers = {"api_key":api_key, "Accept":"application/json"}
 
     try:
-        resp = requests.get("https://api.wmata.com/StationPrediction.svc/json/GetPrediction/" + station_code.value, headers=headers)
+        resp = requests.get("https://api.wmata.com/StationPrediction.svc/json/GetPrediction/" + station_code.value.decode('UTF-8'), headers=headers)
     except Exception as e:
         logging.error("An error occured while getting train data: {}".format(str(e)))
         return None, None, None, None
@@ -134,7 +134,7 @@ def get_train_data(api_key):
             logging.debug("GOT RESPONSE!!")
 
             for train in resp_json['Trains']:
-                if train['Group'] == direction.value:
+                if train['Group'] == direction.value.decode('UTF-8'):
                     car = parse_value(train['Car'])
                     dest = parse_value(train['Destination'])
                     line = parse_value(train['Line'])
@@ -150,7 +150,7 @@ def get_train_data(api_key):
                 # Using the terminal station names which we can get from the codes
                 # we can see if there are any trains going to our destination on the other
                 # pltform
-                station = get_station_by_code(station_code.value)
+                station = get_station_by_code(station_code.value.decode('UTF-8'))
                 terminals = get_line_terminals(station)
                 trains_on_opposite_platform = []
                 for train in resp_json['Trains']:
@@ -163,7 +163,7 @@ def get_train_data(api_key):
                 # to be displayed
                 new_direction = "1"
                 if len(trains_on_opposite_platform) > 0:
-                    if direction.value == "1":
+                    if direction.value.decode('UTF-8') == "1":
                         new_direction = "2"
                     for train in resp_json['Trains']:
                         if train['Group'] == new_direction:
@@ -235,7 +235,7 @@ def serve():
 
 def convert_line(line):
     global lines_file
-    with open(lines_file.value) as lf:
+    with open(lines_file.value.decode('UTF-8')) as lf:
         lines_json = json.load(lf)
         for existing_line in lines_json['Lines']:
             logging.debug("Input line: {}, compared to: {}".format(line, existing_line['DisplayName']))
@@ -247,7 +247,7 @@ def convert_line(line):
 
 def get_station_by_code(code):
     global stations_file
-    with open(stations_file.value) as sf:
+    with open(stations_file.value.decode('UTF-8')) as sf:
         stations = json.load(sf)
         for station in stations['Stations']:
             if station['Code'] == code:
@@ -257,7 +257,7 @@ def get_station_by_code(code):
 
 def get_station_by_name(station_name, station_lines=None):
     global stations_file
-    with open(stations_file.value) as sf:
+    with open(stations_file.value.decode('UTF-8')) as sf:
         stations = json.load(sf)
         for station in stations['Stations']:
             if station_name in station['Name']:
@@ -283,18 +283,18 @@ def parse_direction(direction, line):
 def search_lines(line_code):
     global direction
     global lines_file
-    with open(lines_file.value) as lf:
+    with open(lines_file.value.decode('UTF-8')) as lf:
         lines_json = json.load(lf)
         for line in lines_json['Lines']:
             if line['LineCode'] == line_code:
-                return parse_direction(direction.value, line)
+                return parse_direction(direction.value.decode('UTF-8'), line)
 
 def get_direction_from_terminal(station_name, station_lines):
     global lines_file
     station = get_station_by_name(station_name, station_lines)
     if station != None:
         logging.debug("Name: {} Code: {}".format(station['Name'], station['Code']))
-        with open(lines_file.value) as lf:
+        with open(lines_file.value.decode('UTF-8')) as lf:
             lines_json = json.load(lf)
             for line in lines_json['Lines']:
                 if line['LineCode'] == "YL":
@@ -367,11 +367,11 @@ def respond_success(station, lines=None, new_direction=None):
     logging.debug("Updating station to: {} with code {}.".format(station['Name'], station['Code']))
 
     with station_code.get_lock():
-        station_code.value = station['Code']
+        station_code.value = station['Code'].encode('UTF-8')
 
     if new_direction != None:
         with direction.get_lock():
-            direction.value = new_direction
+            direction.value = new_direction.encode('UTF-8')
 
     terminals = get_line_terminals(station, lines)
 
@@ -390,7 +390,7 @@ def change_station_by_code():
     req = request.get_json(force=True)
     with station_code.get_lock():
         try:
-            station_code.value = req['station']
+            station_code.value = req['station'].encode('UTF-8')
         except:
             badresp = {
                 'reason': "invalid station code"
@@ -459,7 +459,7 @@ def change_station_by_name():
     
     # Look inside cached stations file for the station name
     # and save the associated code
-    with open(stations_file.value) as sf:
+    with open(stations_file.value.decode('UTF-8')) as sf:
         stations = json.load(sf)
         for station in stations['Stations']:
             # Use 'in' operator because of stations like
@@ -514,12 +514,12 @@ def change_direction():
     global direction
     global station_code
     with direction.get_lock():
-        if direction.value == "1":
-            direction.value = "2"
+        if direction.value == "1".encode('UTF-8'):
+            direction.value = "2".encode('UTF-8')
         else:
-            direction.value = "1"
+            direction.value = "1".encode('UTF-8')
 
-    station = get_station_by_code(station_code.value)
+    station = get_station_by_code(station_code.value.decode('UTF-8'))
 
     return respond_success(station)
 
@@ -527,11 +527,11 @@ def change_direction():
 def get_state():
     global station_code
 
-    station = get_station_by_code(station_code.value)
+    station = get_station_by_code(station_code.value.decode('UTF-8'))
 
     if station == None:
         err_json = {
-            'error': "Could not find station for code {}".format(station_code.value)
+            'error': "Could not find station for code {}".format(station_code.value.decode('UTF-8'))
         }
         return jsonify(**err_json), 500
 
