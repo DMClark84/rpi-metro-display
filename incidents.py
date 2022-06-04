@@ -39,7 +39,7 @@ def get_incidents(lines_requested, api_key):
     try:
         headers = {"api_key":api_key, "Accept":"application/json"}
         resp = requests.get('https://api.wmata.com/Incidents.svc/json/Incidents', headers=headers)
-	logging.info("Attempting to get train data!")
+        logging.info("Attempting to get train data!")
         if resp.status_code != 200:
             logging.error("Error getting train data! Response status code: ", resp.status_code)
         else:
@@ -60,7 +60,7 @@ def get_incidents(lines_requested, api_key):
 
                 logging.info(set(lines_requested).intersection(lines_affected))
                 if bool(set(lines_requested).intersection(lines_affected)):
-                        if incident['Description']:
+                    if incident['Description']:
                         desc = incident['Description'].replace("\n", " ")
                         messages.append(desc)
                         logging.info("matched!")
@@ -227,4 +227,3 @@ if __name__ == '__main__':
     messages = get_incidents(['SV', 'OR', 'GR'], api_key)
     for message in messages:
         draw_incident(matrix, message, font_file)
-
